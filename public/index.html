@@ -1,17 +1,89 @@
 <!DOCTYPE html>
-<html lang="">
-  <head>
+<html lang="en">
+<head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <link rel="icon" href="<%= BASE_URL %>favicon.ico">
-    <title><%= htmlWebpackPlugin.options.title %></title>
-  </head>
-  <body>
-    <noscript>
-      <strong>We're sorry but <%= htmlWebpackPlugin.options.title %> doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
-    </noscript>
-    <div id="app"></div>
-    <!-- built files will be auto injected -->
-  </body>
+    <title>1337 Wallpaper Generator</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@latest/css/materialdesignicons.min.css">
+</head>
+<body>
+<noscript>
+    <strong>We're sorry but <%= htmlWebpackPlugin.options.title %> doesn't work properly without JavaScript enabled.
+        Please enable it to continue.</strong>
+</noscript>
+<div id="app"></div>
+<!-- built files will be auto injected -->
+</body>
+<script>
+    function copyStylesInline(destinationNode, sourceNode) {
+        const containerElements = ["svg", "g"];
+        for (var cd = 0; cd < destinationNode.childNodes.length; cd++) {
+            const child = destinationNode.childNodes[cd];
+            if (containerElements.indexOf(child.tagName) !== -1) {
+                copyStylesInline(child, sourceNode.childNodes[cd]);
+                continue;
+            }
+            if (sourceNode.childNodes[cd]) {
+                if (sourceNode.childNodes[cd] === null) continue
+                console.log(typeof sourceNode.childNodes[cd])
+                try {
+                    const style = sourceNode.childNodes[cd].currentStyle || window.getComputedStyle(sourceNode.childNodes[cd]);
+                    if (typeof style === "undefined" || style == null) continue;
+                    for (var st = 0; st < style.length; st++) {
+                        child.style.setProperty(style[st], style.getPropertyValue(style[st]));
+                    }
+                } catch (e) {
+                    console.log(e)
+                }
+            }
+        }
+    }
+
+    function triggerDownload(imgURI, fileName) {
+        var evt = new MouseEvent("click", {
+            view: window,
+            bubbles: false,
+            cancelable: true
+        });
+        var a = document.createElement("a");
+        a.setAttribute("download", fileName);
+        a.setAttribute("href", imgURI);
+        a.setAttribute("target", '_blank');
+        a.dispatchEvent(evt);
+    }
+
+    function downloadSvg(svg, fileName, width, height) {
+        var copy = svg.cloneNode(true);
+        copyStylesInline(copy, svg);
+        var canvas = document.createElement("canvas");
+        var bbox = svg.getBBox();
+        canvas.width = width;
+        canvas.height = height;
+        var ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, width, height);
+        var data = (new XMLSerializer()).serializeToString(copy);
+        var DOMURL = window.URL || window.webkitURL || window;
+        var img = new Image();
+        var svgBlob = new Blob([data], {type: "image/svg+xml;charset=utf-8"});
+        var url = DOMURL.createObjectURL(svgBlob);
+        img.onload = function () {
+            ctx.drawImage(img, 0, 0);
+            DOMURL.revokeObjectURL(url);
+            if (typeof navigator !== "undefined" && navigator.msSaveOrOpenBlob) {
+                var blob = canvas.msToBlob();
+                navigator.msSaveOrOpenBlob(blob, fileName);
+            } else {
+                var imgURI = canvas
+                    .toDataURL("image/png")
+                    .replace("image/png", "image/octet-stream");
+                triggerDownload(imgURI, fileName);
+            }
+            document.removeChild(canvas);
+        };
+        img.src = url;
+    }
+</script>
 </html>
