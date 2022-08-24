@@ -24,11 +24,13 @@ export default class SizeSlider extends Vue {
 	@Watch('width')
 	widthChanged(value: number) {
 		this.$store.commit('setProperty', {key: 'width', value})
+		this.$root.$emit('re-paint')
 	}
 
 	@Watch('height')
 	heightChanged(value: number) {
 		this.$store.commit('setProperty', {key: 'height', value})
+		this.$root.$emit('re-paint')
 	}
 }
 </script>

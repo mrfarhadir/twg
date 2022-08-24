@@ -2,33 +2,12 @@
 	<v-card tile dark class="controls" :class="active ? 'active' : ''">
 		<div class="d-flex align-center justify-center">
 			<Sizes />
-			<v-menu offset-y>
-				<template v-slot:activator="{ on, attrs }">
-					<v-btn
-						color="primary"
-						class="ml-4"
-						dark
-						v-bind="attrs"
-						v-on="on"
-					>
-						Styles
-					</v-btn>
-				</template>
-				<v-list>
-					<v-list-item
-						v-for="(item, index) in styles"
-						:key="index"
-						@click="$root.$emit('setStyle', index)"
-					>
-						<v-list-item-title>{{ item.title }}</v-list-item-title>
-					</v-list-item>
-				</v-list>
-			</v-menu>
+			<Styles />
 		</div>
 		<!--Draw / -->
 		<DeviceSizes />
 		<div>
-			<v-btn :loading="$store.getters.isLoading" icon class="primary accent--text" @click="$root.$emit('re-draw')">
+			<v-btn :loading="$store.getters.isLoading" icon class="primary accent--text" @click="rePaint">
 				<v-icon>mdi-reload</v-icon>
 			</v-btn>
 			<v-btn icon class="primary accent--text mx-2" @click="download">
@@ -47,22 +26,19 @@ import SizeSlider from "@/components/controls/SizeSlider.vue";
 import DeviceSizes from "@/components/controls/DeviceSizes.vue";
 import Sizes from "@/components/controls/Sizes.vue";
 import Draw from "@/components/controls/Draw.vue";
+import Styles from "@/components/controls/Styles.vue";
 
 @Component({
 	name: 'Controls',
-	components: {Draw, Sizes, DeviceSizes, SizeSlider}
+	components: {Styles, Draw, Sizes, DeviceSizes, SizeSlider}
 })
 export default class Controls extends Vue {
 	active = true
 
-	styles = [
-		{ title: 'Strange Stripe' },
-		{ title: 'Simple Lines' },
-		{ title: 'Again Strange' },
-		{ title: 'Stripe!' },
-		{ title: 'Curves' },
-		{ title: 'Tick Curves' },
-	]
+	rePaint() {
+		console.log('okkkkk')
+		this.$root.$emit('re-paint')
+	}
 
 	download() {
 		const svg = document.querySelector('.background-wrapper > svg')

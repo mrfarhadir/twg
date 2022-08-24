@@ -1,27 +1,59 @@
+export interface IShape {
+    logo?: {
+        x: Array<number>,
+        y: Array<number>,
+        width: number
+    }
+
+    template(): string
+}
 
 export class Shape {
-    template = ''
-    color = ''
-    constructor(public base: BaseSvg, private svg: SVGElement) {
+    svg: SVGElement
+    screenWidth = 0
+    screenHeight = 0
+
+    logo?: {
+        x: Array<number>,
+        y: Array<number>,
+        width: number
+    }
+
+    constructor(svg: SVGElement) {
+        this.svg = svg
+        this.screenWidth = svg.clientWidth
+        this.screenHeight = svg.clientHeight
+    }
+
+    init(): void {
+        console.log('init...')
+    }
+
+    render(template: string) {
         this.clear()
+        this.svg.innerHTML = template
     }
 
     clear() {
-        this.svg.querySelectorAll(`.${this.constructor.name}`)
-            .forEach(element => {
-                element.remove()
-            })
+        this.svg.innerHTML = ''
     }
 
-    append() {
-        this.svg.innerHTML += this.template
+    maxDimension(): number {
+        return Math.max(this.screenWidth, this.screenHeight)
     }
 
-    setColor(color: string) {
-        this.color = color
-    }
-
-    generate_id(): string {
-        return Math.random().toString(24).slice(2)
+    template(): string {
+        return ''
     }
 }
+
+export function Shaper() {
+    return function (target: typeof Shape) {
+
+        target.prototype.init = function () {
+            const template = target.prototype.template.bind(this)()
+            target.prototype.render.bind(this)(template)
+        }
+    }
+}
+

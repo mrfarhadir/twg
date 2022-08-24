@@ -6,18 +6,17 @@
 
 <script lang="ts">
 import {Component, Prop, Vue, Watch} from 'vue-property-decorator';
-import {Rod} from "@/class/Rod";
-import {Stripe} from "@/class/stripe/Stripe";
 import axios from "axios";
 import {ImageProcessor} from "@/class/ImageProcessor";
 import {ImageProcessEvents} from "@/class/enums";
 import {Logo} from "@/class/Logo";
-import {sleep} from "@/utils/General";
+import {Painter} from "@/class/Painter";
+import {getPositionFromAreaPercent} from "@/utils/Position";
 
 @Component
 export default class Background extends Vue {
 
-	style = 2
+	style = 0
 
 	background = '#0c0c91'
 	foreground = '#05e273'
@@ -30,13 +29,13 @@ export default class Background extends Vue {
 
 	mounted() {
 		const svg = document.querySelector('svg') || {} as SVGElement
-		this.setBackground()
 		this.logo = new Logo(svg, this.logoUrl)
+		this.setBackground()
 		this.init()
 
-		this.$root.$on('re-draw', async () => {
+		this.$root.$on('re-paint', async () => {
+			console.log('ok back')
 			this.$store.commit('setProperty', {key: 'loading', value: true})
-			await sleep(0.3)
 			this.init()
 			this.$store.commit('setProperty', {key: 'loading', value: false})
 		})
@@ -47,30 +46,35 @@ export default class Background extends Vue {
 		})
 	}
 
-	@Watch('$store.getters.height')
-	widthChanged() {
-		this.init()
-	}
-
-	@Watch('$store.getters.width')
-	heightChanged() {
-		this.init()
-	}
-
-	init() {
+	async init() {
 		const svg = document.querySelector('svg') || {} as SVGElement
-		svg.innerHTML = ''
-		this.applyStripeBackground()
-		// this.initLogo()
+		const painter = new Painter(svg, this.$store.getters.shapes)
+		await painter.init()
+		painter.paint(this.style)
+		const logo = this.logo
+
 		const imageProcessor = new ImageProcessor()
+		const logoPosition = painter.logoPositionPercent(this.style)
+		// Check If shape has made a decision for logo position or not
+		if (logoPosition) {
+			this.paintLogo(logo, logoPosition.x, logoPosition.y, painter.logoWidth(this.style))
+			return
+		}
 
+		// Ok! the shape does not care about the logo position so lets find by ourselves
 		imageProcessor.findSuitableAreaForLogo(svg)
+		imageProcessor.on<string>(ImageProcessEvents.LOGO_AREA_FOUND, async (areasPercentString) => {
+			const {
+				xRange,
+				yRange
+			} = getPositionFromAreaPercent(
+				areasPercentString,
+				logo.logoScale * logo.element.naturalWidth,
+				logo.logoScale * logo.element.naturalHeight,
+				this.svg.clientWidth, this.svg.clientHeight
+			)
 
-		imageProcessor.on<Matrix>(ImageProcessEvents.LOGO_AREA_FOUND, async (areasPercent) => {
-			console.log(areasPercent)
-			this.logo.setAreaPercent(areasPercent)
-			await this.logo.init()
-			this.$store.commit('setProperty', {key: 'loading', value: false})
+			await this.paintLogo(logo, xRange, yRange)
 		})
 	}
 
@@ -79,11 +83,12 @@ export default class Background extends Vue {
 		svg.style.backgroundColor = this.background
 	}
 
-	applyStripeBackground() {
-		const svg = document.querySelector('svg') || {} as SVGElement
-		const stripe = new Stripe({height: this.$store.getters.height, width: this.$store.getters.width}, svg, this.style)
-		stripe.setColor(this.foreground)
-		stripe.render()
+	async paintLogo(logo: Logo, xRange: Array<number>, yRange: Array<number>, logoWidth?: number) {
+		logo.xRange = xRange
+		logo.yRange = yRange
+		await logo.init(logoWidth)
+		this.$store.commit('setProperty', {key: 'loading', value: false})
+
 	}
 
 	async getLogo() {
@@ -142,9 +147,9 @@ export default class Background extends Vue {
 
 	addRod() {
 		const svg = this.$refs.svg as SVGElement
-		const rod = new Rod({height: this.$store.getters.height, width: this.$store.getters.width}, svg)
-		rod.setColor(this.foreground)
-		rod.render()
+		// const rod = new Rod({height: this.$store.getters.height, width: this.$store.getters.width}, svg)
+		// rod.setColor(this.foreground)
+		// rod.render()
 	}
 }
 </script>

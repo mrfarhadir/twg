@@ -25,19 +25,23 @@ export class ImageProcessor extends EventEmitter {
             // cool we found area populations but these big numbers does not make sense so convert it to percent
             const percentArea = this.getAreaPercent(area, zeroOneMatrix.length)
             // ok we are ready to emit the percent matrix we have found a suitable place to land the logo :)
-            this.emit(ImageProcessEvents.LOGO_AREA_FOUND, percentArea)
+            // console.log({percentArea})
+            this.emit(ImageProcessEvents.LOGO_AREA_FOUND, JSON.stringify(percentArea))
         })
     }
 
     getAreaPercent(matrix: Matrix, n: number) {
+        // console.log({matrix})
         n = Math.floor(n / 3)
-        const percentMatrix: Matrix = JSON.parse(JSON.stringify(matrix))
+        // console.log({n})
+        const temp = []
         for (let i = 0; i < matrix.length; i++) {
             for (let j = 0; j < matrix[i].length; j++) {
-                percentMatrix[i][j] = parseFloat((matrix[i][j] / (n * n)).toFixed(2)) * 100
+                const p = parseFloat((matrix[i][j] / (n * n)).toFixed(2)) * 100
+                temp.push(p)
             }
         }
-        return percentMatrix
+        return temp.join(',')
     }
 
     getColorPopulationArea(matrix: ZeroOneMatrix) {
@@ -48,7 +52,7 @@ export class ImageProcessor extends EventEmitter {
                 let sum = 0
                 for(let r = 0; r < p; r++) {
                     for (let s = 0; s < p; s++) {
-                        if (matrix[i + r][j + s] === 1) {
+                        if (matrix[i +r] && matrix[i + r][j + s] === 1) {
                             sum++
                         }
                     }

@@ -1,35 +1,45 @@
 import {generate_id} from "@/utils/General";
-import {getPositionFromAreaPercent} from "@/utils/Position";
 import {randomInt} from "@/utils";
 
 export class Logo {
     id = ''
     logoScale = 5
-    areaPercent: Matrix = [[]]
+    areaPercent = ''
+    xRange: Array<number> = []
+    yRange: Array<number> = []
+    element: HTMLImageElement = {} as HTMLImageElement
 
     constructor(public svg: SVGElement, public url: string) {
         this.id = 'logo-' + generate_id()
     }
 
-    async init() {
+    async init(logoWidth?: number) {
         this.clearIfExists()
-        const logo = await this.add()
-        console.dir(logo)
-        const {
-            xRange,
-            yRange
-        } = getPositionFromAreaPercent(this.areaPercent, this.logoScale * logo.naturalWidth, this.logoScale * logo.naturalHeight, this.svg.clientWidth, this.svg.clientHeight)
-        const {x, y} = this.getRandomPositionByAreaRange(logo, xRange, yRange)
-        this.setLogoPosition(x, y, logo)
-        console.log(xRange, yRange)
+        this.element = await this.add(logoWidth)
+        const {x, y} = this.getRandomPositionByAreaRange(this.element, this.xRange, this.yRange)
+        this.setLogoPosition(x, y, this.element)
     }
 
-    setAreaPercent(areaPercent: Matrix) {
+    setLogoScale(logo: HTMLImageElement, logoWidth?: number) {
+        const screen = this.svg.clientWidth
+        const ratio = screen >= 768 ? 3.2 : 1.95
+        this.logoScale = (screen / (ratio * logo.naturalWidth))
+        if (logoWidth) {
+            this.logoScale = (logoWidth) / (logo.naturalWidth)
+        }
+
+        console.log('logoscale: ', this.logoScale, ' logoWidth', logo.naturalWidth)
+        console.dir(logo)
+    }
+
+    setAreaPercent(areaPercent: string) {
+        console.log({areaPercent})
         this.areaPercent = areaPercent
     }
 
-    async add() {
+    async add(logoWidth?: number) {
         const logo = await this.getImage()
+        this.setLogoScale(logo, logoWidth)
         const base64 = this.getLogoBase64(logo)
         const tag = this.generateLogoTag(logo, base64)
         this.svg.innerHTML += tag
@@ -60,7 +70,7 @@ export class Logo {
     generateLogoTag(logo: HTMLImageElement, base64: string) {
         return `
             <g id="${this.id}">
-                <image href="${base64}" />
+                <image href="${base64}" width="${this.logoScale * logo.width}px" height="${this.logoScale * logo.height}px" />
             </g>
         `
     }
@@ -72,7 +82,7 @@ export class Logo {
         canvas.height = this.logoScale * logo.height;
         if (ctx)
             ctx.drawImage(logo, 0, 0, this.logoScale * logo.naturalWidth, this.logoScale * logo.naturalHeight);
-        return canvas.toDataURL('png', 100)
+        return canvas.toDataURL('jpeg', 100)
     }
 
     getImage(): Promise<HTMLImageElement> {
@@ -90,7 +100,7 @@ export class Logo {
     }
 
     clearIfExists() {
-        const exists = this.svg.querySelector(`g#${this.id}`)
+        const exists = document.querySelector(`g#${this.id}`)
         if (exists) {
             exists.remove()
         }

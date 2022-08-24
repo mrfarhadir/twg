@@ -15,7 +15,8 @@ type ColorCode = {
 }
 
 type Formula<T> = {
-    toleranceRange: [number, number]
-    handler(input: T): number
-    template(params: number): string
+    template(max: number, details?: {
+        screenWidth: number,
+        screenHeight: number
+    }): string
 }
