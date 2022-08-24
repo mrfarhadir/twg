@@ -1,4 +1,4 @@
-# twg
+# Tretton37 wallpaper generator
 
 ## Project setup
 ```
