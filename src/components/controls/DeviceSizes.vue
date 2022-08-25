@@ -14,6 +14,11 @@ export default class DeviceSizes extends Vue {
   activeLoadingIndex = -1
 	devices = [
 		{
+			width: 2560,
+			height: 1600,
+			icon: 'mdi-video-4k-box'
+		},
+		{
 			width: 1920,
 			height: 1080,
 			icon: 'mdi-monitor'
